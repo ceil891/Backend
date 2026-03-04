@@ -1,13 +1,14 @@
 package com.smartretail.backend.security;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import java.util.Date;
+
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -28,6 +29,10 @@ public class JwtTokenProvider {
 
     public String generateToken(Authentication authentication) {
         String userEmail = authentication.getName();
+        return generateTokenFromEmail(userEmail);
+    }
+
+    public String generateTokenFromEmail(String userEmail) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 

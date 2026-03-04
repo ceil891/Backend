@@ -7,7 +7,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.smartretail.backend.entity.CuaHang;
 @Entity
 @Data
 @Table(name = "users")
@@ -39,12 +40,15 @@ public class User {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cuaHangId") // Tên cột sẽ xuất hiện trong bảng users ở MySQL
+    private CuaHang cuaHang;
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "userRoles",
             joinColumns = @JoinColumn(name = "userId"),
             inverseJoinColumns = @JoinColumn(name = "roleId")
     )
+    @JsonIgnore // Prevent infinite recursion during serialization
     private Set<Role> roles = new HashSet<>();
 }

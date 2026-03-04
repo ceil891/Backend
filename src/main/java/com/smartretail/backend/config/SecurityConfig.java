@@ -17,7 +17,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,32 +48,39 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, TokenBlacklistService blacklistService) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
-                        .anyRequest().authenticated()
-                );
-        http.addFilterBefore(jwtAuthenticationFilter(blacklistService), UsernamePasswordAuthenticationFilter.class);
+ @Bean
+public SecurityFilterChain filterChain(HttpSecurity http, TokenBlacklistService blacklistService) throws Exception {
+    http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/", "/favicon.ico", "/error").permitAll()
+                    .requestMatchers("/api/auth/**").permitAll()
+                    // SỬA TẠI ĐÂY: Cho phép truy cập các API Cloudinary
+                    .requestMatchers("/api/v1/cloudinary/**").authenticated() 
+                    .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
+                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/api-docs/**").permitAll()
+                    .requestMatchers("/actuator/**").permitAll()
+                    .anyRequest().authenticated()
+            );
+    http.addFilterBefore(jwtAuthenticationFilter(blacklistService), UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+    return http.build();
+}
 
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(Collections.singletonList("*"));
+        // Cho phép cả Vite (5173) và app chạy ở 3000
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:5173",
+                "http://localhost:3000"
+        ));
 
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
-
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

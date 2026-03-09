@@ -14,6 +14,8 @@ import java.util.List;
 public class HoaDonDTO {
 
     private Integer hoaDonId;
+    private String maHoaDon;
+    private String kenhBan;
     private Integer cuaHangId;
     private String tenCuaHang;
     private Integer khachHangId;
@@ -22,12 +24,17 @@ public class HoaDonDTO {
     private Integer nhanVienId;
     private String tenNhanVien;
     private Timestamp ngayLap;
+    private String phuongThucThanhToan;
+    private String ghiChu;
     private BigDecimal tamTinh;
     private BigDecimal tienThue;
     private BigDecimal chietKhau;
     private BigDecimal phiShip;
     private BigDecimal tongPhaiThanhToan;
     private String trangThai;
+    private Timestamp ngayHuy;
+    private String lyDoHuy;
+    private String nguoiHuy;
     private List<ChiTietHoaDonDTO> chiTietHoaDons;
     private List<GiaoDichThanhToanDTO> giaoDichThanhToans;
 }

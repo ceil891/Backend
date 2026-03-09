@@ -5,14 +5,20 @@ import com.smartretail.backend.dto.pos.CreateOrderRequest;
 import com.smartretail.backend.dto.pos.OrderSummaryDTO;
 import com.smartretail.backend.entity.ChiTietHoaDon;
 import com.smartretail.backend.entity.HoaDon;
+import com.smartretail.backend.service.ExcelExportService;
+import com.smartretail.backend.service.GoogleSheetsService;
 import com.smartretail.backend.service.HoaDonService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -22,6 +28,8 @@ import java.util.Optional;
 public class HoaDonController {
 
     private final HoaDonService hoaDonService;
+    private final ExcelExportService excelExportService;
+    private final GoogleSheetsService googleSheetsService;
 
     // ✅ Đã sửa: Gọi thẳng hàm getAllHoaDon từ Service (hàm này đã được đổi để trả về List<HoaDonDTO>)
     @GetMapping
@@ -91,6 +99,65 @@ public class HoaDonController {
         return ResponseEntity.ok(revenue);
     }
 
+    @GetMapping("/query")
+    public ResponseEntity<List<HoaDonDTO>> queryHoaDon(
+            @RequestParam(required = false) Integer storeId,
+            @RequestParam(required = false) String channel,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Timestamp from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Timestamp to,
+            @RequestParam(required = false) String keyword
+    ) {
+        return ResponseEntity.ok(hoaDonService.searchOrders(storeId, channel, status, from, to, keyword));
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportHoaDonExcel(
+            @RequestParam(required = false) Integer storeId,
+            @RequestParam(required = false) String channel,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Timestamp from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Timestamp to,
+            @RequestParam(required = false) String keyword
+    ) {
+        List<HoaDonDTO> orders = hoaDonService.searchOrders(storeId, channel, status, from, to, keyword);
+
+        List<String> headers = List.of(
+                "Mã HĐ", "Ngày", "Khách hàng", "SĐT", "Kênh", "Tổng tiền", "Giảm giá", "Thanh toán", "Nhân viên", "Chi nhánh", "Trạng thái"
+        );
+        List<List<Object>> rows = new ArrayList<>();
+        for (HoaDonDTO o : orders) {
+            rows.add(List.of(
+                    o.getMaHoaDon(),
+                    o.getNgayLap(),
+                    o.getTenKhachHang(),
+                    o.getDienThoaiKhachHang(),
+                    o.getKenhBan(),
+                    o.getTamTinh(),
+                    o.getChietKhau(),
+                    o.getTongPhaiThanhToan(),
+                    o.getTenNhanVien(),
+                    o.getTenCuaHang(),
+                    o.getTrangThai()
+            ));
+        }
+
+        byte[] bytes = excelExportService.exportToExcel("Orders", headers, rows);
+        googleSheetsService.appendRow("exports", List.of(
+                "EXPORT_ORDERS",
+                channel,
+                status,
+                from,
+                to,
+                keyword,
+                orders.size()
+        ));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=orders.xlsx")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(bytes);
+    }
+
     @PostMapping
     public ResponseEntity<OrderSummaryDTO> createHoaDonFromPos(@RequestBody CreateOrderRequest request) {
         HoaDon saved = hoaDonService.createOrderFromPos(request);
@@ -109,6 +176,14 @@ public class HoaDonController {
     public ResponseEntity<Void> updateTrangThai(@PathVariable Integer id, @RequestParam String trangThai) {
         hoaDonService.updateTrangThai(id, trangThai);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<Map<String, Object>> cancel(@PathVariable Integer id,
+                                                     @RequestParam(required = false) String reason,
+                                                     @RequestParam(required = false) String cancelledBy) {
+        hoaDonService.cancelOrder(id, reason, cancelledBy);
+        return ResponseEntity.ok(Map.of("success", true));
     }
 
     @DeleteMapping("/{id}")

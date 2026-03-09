@@ -15,6 +15,7 @@ import java.util.Optional;
 public class BienTheSanPhamService {
 
     private final BienTheSanPhamRepository bienTheSanPhamRepository;
+    private final GoogleSheetsService googleSheetsService;
 
     public List<BienTheSanPham> getAllBienThe() {
         return bienTheSanPhamRepository.findAll();
@@ -41,7 +42,18 @@ public class BienTheSanPhamService {
     }
 
     public BienTheSanPham saveBienThe(BienTheSanPham bienThe) {
-        return bienTheSanPhamRepository.save(bienThe);
+        BienTheSanPham saved = bienTheSanPhamRepository.save(bienThe);
+        googleSheetsService.appendRow("variants", List.of(
+                "CREATE_VARIANT",
+                saved.getBienTheId(),
+                saved.getSanPham() != null ? saved.getSanPham().getSanPhamId() : null,
+                saved.getMaSku(),
+                saved.getTenBienThe(),
+                saved.getGiaBan(),
+                saved.getGiaNhap(),
+                saved.getHoatDong()
+        ));
+        return saved;
     }
 
     public BienTheSanPham updateBienThe(BienTheSanPham bienThe) {

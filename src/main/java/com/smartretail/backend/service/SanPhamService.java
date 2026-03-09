@@ -21,6 +21,7 @@ public class SanPhamService {
     private final DanhMucRepository danhMucRepository;
     private final BienTheSanPhamRepository bienTheRepository; // ✅ Inject Repo để lưu biến thể
     private final CloudinaryService cloudinaryService;
+    private final GoogleSheetsService googleSheetsService;
 
     public List<SanPham> getAllSanPham() {
         return sanPhamRepository.findAll();
@@ -67,7 +68,19 @@ public class SanPhamService {
         defaultVariant.setHoatDong(true);
         
         // Lưu biến thể vào database
-        bienTheRepository.save(defaultVariant);
+        BienTheSanPham savedVariant = bienTheRepository.save(defaultVariant);
+
+        // ✅ Log Google Sheets (tạo sản phẩm + biến thể mặc định)
+        googleSheetsService.appendRow("products", List.of(
+                "CREATE_PRODUCT",
+                savedSp.getSanPhamId(),
+                savedSp.getMaSku(),
+                savedSp.getTenSanPham(),
+                savedSp.getGiaBan(),
+                savedVariant.getBienTheId(),
+                savedVariant.getMaSku(),
+                savedVariant.getTenBienThe()
+        ));
 
         return savedSp;
     }
@@ -127,5 +140,28 @@ public class SanPhamService {
 
         // Xóa sản phẩm (Cascade sẽ tự xóa các biến thể liên quan nếu bạn cấu hình trong Entity)
         sanPhamRepository.delete(sanPham);
+    }
+    @Transactional
+    public void deactivateSanPham(Integer id) {
+        SanPham sanPham = sanPhamRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+
+        // Đặt trạng thái HoatDong thành false (Khóa)
+        sanPham.setHoatDong(false);
+        sanPhamRepository.save(sanPham);
+
+        // Optional: Bạn có thể viết thêm logic khóa luôn các Biến Thể của sản phẩm này ở đây
+    }
+
+    @Transactional
+    public void activateSanPham(Integer id) {
+        SanPham sanPham = sanPhamRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+
+        // Đặt trạng thái HoatDong thành true (Mở khóa)
+        sanPham.setHoatDong(true);
+        sanPhamRepository.save(sanPham);
+
+        // Optional: Mở khóa luôn các Biến Thể nếu cần
     }
 }

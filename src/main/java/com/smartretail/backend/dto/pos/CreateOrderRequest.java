@@ -19,6 +19,11 @@ public class CreateOrderRequest {
 
     private String paymentMethod;       // CASH / QR_CODE / CARD
 
+    private String maHoaDon;            // tùy chọn (nếu frontend muốn set mã)
+    private String kenhBan;             // RETAIL / ONLINE / SHOPEE / FACEBOOK / WEBSITE ...
+    private String status;              // tùy chọn
+    private String notes;               // ghi chú
+
     private List<OrderItemRequest> items;
 
     @Data

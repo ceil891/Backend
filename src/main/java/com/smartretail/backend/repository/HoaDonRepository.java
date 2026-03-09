@@ -29,6 +29,34 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer> {
     @Query("SELECT SUM(h.tongPhaiThanhToan) FROM HoaDon h WHERE h.trangThai = 'completed' AND h.ngayLap BETWEEN :startDate AND :endDate")
     Double getTotalRevenueInPeriod(@Param("startDate") Timestamp startDate, @Param("endDate") Timestamp endDate);
 
+    @Query("""
+            SELECT h
+            FROM HoaDon h
+            LEFT JOIN h.khachHang k
+            WHERE (:storeId IS NULL OR h.cuaHang.cuaHangId = :storeId)
+              AND (:channel IS NULL OR h.kenhBan = :channel)
+              AND (:status IS NULL OR h.trangThai = :status)
+              AND (:fromDate IS NULL OR h.ngayLap >= :fromDate)
+              AND (:toDate IS NULL OR h.ngayLap <= :toDate)
+              AND (
+                    :keyword IS NULL OR :keyword = '' OR
+                    LOWER(COALESCE(h.maHoaDon, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                    (k IS NOT NULL AND (
+                        LOWER(COALESCE(k.hoTen, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                        LOWER(COALESCE(k.dienThoai, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    ))
+              )
+            ORDER BY h.ngayLap DESC
+            """)
+    List<HoaDon> searchOrders(
+            @Param("storeId") Integer storeId,
+            @Param("channel") String channel,
+            @Param("status") String status,
+            @Param("fromDate") Timestamp fromDate,
+            @Param("toDate") Timestamp toDate,
+            @Param("keyword") String keyword
+    );
+
 
     // --- 3 HÀM BÁO CÁO MỚI CHO REACT RECHARTS ---
 

@@ -29,9 +29,18 @@ public class SoQuy {
     @Column(name = "ly_do", columnDefinition = "TEXT")
     private String lyDo;
 
+    @Column(name = "doi_tuong", length = 150)
+    private String doiTuong;
+
+    @Column(name = "phuong_thuc", length = 50)
+    private String phuongThuc;
+
     @Column(name = "tham_chieu", length = 50)
     private String thamChieu;
 
     @Column(name = "thoi_gian", nullable = false)
     private Timestamp thoiGian;
+
+    @Column(name = "nhan_vien", length = 100)
+    private String nhanVien;
 }

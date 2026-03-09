@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -39,6 +40,18 @@ public class HoaDon {
     @Column(name = "ngay_lap", nullable = false)
     private Timestamp ngayLap;
 
+    @Column(name = "ma_hoa_don", length = 50)
+    private String maHoaDon;
+
+    @Column(name = "kenh_ban", length = 30)
+    private String kenhBan; // RETAIL / ONLINE / SHOPEE / FACEBOOK / WEBSITE ...
+
+    @Column(name = "phuong_thuc_thanh_toan", length = 30)
+    private String phuongThucThanhToan;
+
+    @Column(name = "ghi_chu", columnDefinition = "TEXT")
+    private String ghiChu;
+
     @Column(name = "tam_tinh", precision = 10, scale = 2)
     private BigDecimal tamTinh;
 
@@ -56,6 +69,19 @@ public class HoaDon {
 
     @Column(name = "trang_thai", length = 50)
     private String trangThai;
+
+    @Column(name = "ngay_huy")
+    private Timestamp ngayHuy;
+
+    @Column(name = "ly_do_huy", columnDefinition = "TEXT")
+    private String lyDoHuy;
+
+    @Column(name = "nguoi_huy", length = 100)
+    private String nguoiHuy;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private Timestamp updatedAt;
 
     // ✅ VŨ KHÍ BÍ MẬT: Ép Spring Boot gửi danh sách này cho React
     @JsonManagedReference
